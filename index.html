@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Quit Protocol</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Courier New', monospace; background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); color: #00ff88; height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+        .container { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; }
+        .hypnosis-chamber { background: rgba(0, 20, 40, 0.9); border: 2px solid #00ff88; border-radius: 20px; padding: 40px; max-width: 600px; width: 100%; box-shadow: 0 0 30px rgba(0, 255, 136, 0.3); text-align: center; }
+        h1 { color: #00ff88; margin-bottom: 10px; font-size: 28px; text-shadow: 0 0 10px rgba(0, 255, 136, 0.5); }
+        .subtitle { color: #00aa55; margin-bottom: 30px; font-size: 12px; letter-spacing: 2px; }
+        .brainwave-display { background: rgba(0, 40, 80, 0.5); border: 1px solid #00ff88; border-radius: 10px; padding: 30px; margin: 30px 0; min-height: 150px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .frequency-value { font-size: 48px; color: #00ff88; font-weight: bold; margin: 10px 0; text-shadow: 0 0 20px rgba(0, 255, 136, 0.5); }
+        .frequency-label { color: #00aa55; font-size: 14px; margin-bottom: 15px; }
+        .state-indicator { padding: 10px 20px; background: rgba(0, 255, 136, 0.1); border: 1px solid #00ff88; border-radius: 5px; margin: 10px 0; font-size: 14px; color: #00ff88; }
+        .controls { display: flex; gap: 15px; margin: 30px 0; justify-content: center; flex-wrap: wrap; }
+        button { padding: 15px 30px; border: 2px solid #00ff88; background: rgba(0, 255, 136, 0.1); color: #00ff88; cursor: pointer; border-radius: 5px; font-size: 14px; font-weight: bold; transition: all 0.3s; font-family: 'Courier New', monospace; }
+        button:hover { background: rgba(0, 255, 136, 0.2); box-shadow: 0 0 15px rgba(0, 255, 136, 0.5); }
+        button:active { transform: scale(0.98); }
+        .status-log { background: rgba(0, 20, 40, 0.7); border: 1px solid #00aa55; border-radius: 5px; padding: 15px; margin-top: 20px; max-height: 200px; overflow-y: auto; text-align: left; font-size: 12px; }
+        .log-entry { color: #00ff88; margin: 5px 0; padding: 5px; border-left: 2px solid #00ff88; padding-left: 10px; }
+        .log-entry.critical { color: #ff0055; border-left-color: #ff0055; }
+        .visualization { width: 100%; height: 100px; margin: 20px 0; background: rgba(0, 40, 80, 0.3); border: 1px solid #00aa55; border-radius: 5px; display: flex; align-items: flex-end; justify-content: space-around; }
+        .wave-bar { height: 100%; display: inline-block; background: linear-gradient(to top, #00ff88, #00aa55); width: 3px; margin: 0 1px; border-radius: 2px; opacity: 0.7; }
+        .session-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+        .stat-box { background: rgba(0, 255, 136, 0.05); border: 1px solid #00aa55; padding: 15px; border-radius: 5px; }
+        .stat-label { color: #00aa55; font-size: 12px; margin-bottom: 5px; }
+        .stat-value { color: #00ff88; font-size: 20px; font-weight: bold; }
+        .warning { background: rgba(255, 0, 85, 0.1); border: 1px solid #ff0055; color: #ff0055; padding: 15px; border-radius: 5px; margin: 20px 0; font-size: 12px; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="hypnosis-chamber">
+            <h1>⚡ NEURAL QUIT PROTOCOL</h1>
+            <div class="subtitle">PASSIVE SUBCONSCIOUS REPROGRAMMING SYSTEM</div>
+            
+            <div class="warning">
+                ⚠️ AGGRESSIVE MODE ACTIVATED<br>
+                Binaural beats + subliminal messaging. No willpower required.
+            </div>
+            
+            <div class="brainwave-display">
+                <div class="frequency-label">CURRENT BRAINWAVE FREQUENCY</div>
+                <div class="frequency-value" id="frequency">12 Hz</div>
+                <div class="state-indicator" id="state">IDLE - Ready for induction</div>
+                <div class="visualization" id="viz"></div>
+            </div>
+            
+            <div class="controls">
+                <button onclick="startSession()">▶ START SESSION</button>
+                <button onclick="stopSession()">⏹ STOP</button>
+                <button onclick="loopMode()">🔄 LOOP 2X DAILY</button>
+            </div>
+            
+            <div class="session-stats">
+                <div class="stat-box"><div class="stat-label">Duration</div><div class="stat-value" id="duration">00:00</div></div>
+                <div class="stat-box"><div class="stat-label">Messages</div><div class="stat-value" id="messages">0</div></div>
+                <div class="stat-box"><div class="stat-label">Sessions</div><div class="stat-value" id="completed">0</div></div>
+                <div class="stat-box"><div class="stat-label">Integration</div><div class="stat-value" id="integration">0%</div></div>
+            </div>
+            
+            <div class="status-log" id="log"></div>
+        </div>
+    </div>
+    
+    <script>
+        let isRunning = false, frequency = 12, messageCount = 0, sessionCount = 0, sessionTime = 0, integration = 0, looping = false, induction = true;
+        
+        const subliminals = ["smoke is poison","body rejects nicotine","cigars taste like ash","smoking controls mind","free without cigarettes","lungs heal with breath","nicotine is a slave master","you choose freedom","cigarettes disgust you","stronger than cravings","smoking steals health","breath without smoke heals","deserve clean body","nicotine is a lie","cigarettes cage freedom"];
+        
+        function log(msg, critical = false) {
+            const el = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = critical ? 'log-entry critical' : 'log-entry';
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            el.appendChild(entry);
+            el.scrollTop = el.scrollHeight;
+        }
+        
+        function updateWaveform() {
+            const viz = document.getElementById('viz');
+            viz.innerHTML = '';
+            for (let i = 0; i < 60; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'wave-bar';
+                bar.style.height = (Math.abs(Math.sin(i / 5 + frequency / 10)) * 100) + '%';
+                viz.appendChild(bar);
+            }
+        }
+        
+        function updateStats() {
+            document.getElementById('duration').textContent = String(Math.floor(sessionTime / 60)).padStart(2, '0') + ':' + String(sessionTime % 60).padStart(2, '0');
+            document.getElementById('messages').textContent = messageCount;
+            document.getElementById('completed').textContent = sessionCount;
+            document.getElementById('integration').textContent = Math.min(integration, 100) + '%';
+        }
+        
+        function frequencyRamp() {
+            if (!isRunning) return;
+            if (induction && frequency > 4) {
+                frequency -= 0.05;
+                if (frequency <= 4) {
+                    induction = false;
+                    log('🧠 THETA STATE ACHIEVED - Subconscious open', false);
+                    document.getElementById('state').textContent = 'THETA (4Hz) - Deep trance. Suggestions embedding.';
+                }
+            } else if (!induction && frequency < 12) {
+                frequency += 0.002;
+            }
+            document.getElementById('frequency').textContent = frequency.toFixed(1) + ' Hz';
+            updateWaveform();
+        }
+        
+        function deliverSubliminals() {
+            if (!isRunning || induction) return;
+            messageCount++;
+            if (messageCount % 5 === 0) {
+                log(`📡 ${subliminals[Math.floor(Math.random() * subliminals.length)]}`, false);
+            }
+        }
+        
+        function integrateMemory() {
+            if (!isRunning || induction) return;
+            integration += 0.15;
+            integration = Math.min(integration, 100);
+        }
+        
+        function sessionTick() {
+            if (!isRunning) return;
+            sessionTime++;
+            frequencyRamp();
+            deliverSubliminals();
+            integrateMemory();
+            updateStats();
+            if (sessionTime >= 5) endSession();
+        }
+        
+        function startSession() {
+            if (isRunning) return;
+            isRunning = true;
+            sessionTime = 0;
+            frequency = 12;
+            messageCount = 0;
+            induction = true;
+            integration = 0;
+            log('🚀 NEURAL REPROGRAMMING INITIATED', true);
+            log('⏱️  60-min passive conditioning cycle starting');
+            log('🧠 Entering deep theta trance...');
+            log('📡 Subliminal messaging begins');
+            const tid = setInterval(() => { if (!isRunning) clearInterval(tid); else sessionTick(); }, 1000);
+        }
+        
+        function endSession() {
+            isRunning = false;
+            sessionCount++;
+            log('✅ ' + messageCount + ' subliminals integrated', false);
+            log('📈 Neural integration: ' + Math.min(integration, 100) + '%', false);
+            log('Sessions: ' + sessionCount, true);
+            if (looping && sessionCount < 60) setTimeout(startSession, 43200000);
+            updateStats();
+        }
+        
+        function stopSession() {
+            isRunning = false;
+            frequency = 12;
+            induction = true;
+            document.getElementById('state').textContent = 'IDLE - Ready';
+            document.getElementById('frequency').textContent = '12 Hz';
+            updateWaveform();
+            log('⏹️  Stopped', false);
+        }
+        
+        function loopMode() {
+            looping = !looping;
+            if (looping) {
+                log('🔄 LOOP MODE: 2x daily for 30 days', true);
+                startSession();
+            } else {
+                log('🔄 Loop mode off', false);
+            }
+        }
+        
+        updateWaveform();
+        updateStats();
+        log('🎯 Ready. Press START SESSION.');
+        log('⚠️  This bypasses conscious resistance. You WILL quit.', true);
+    </script>
+</body>
+</html>
